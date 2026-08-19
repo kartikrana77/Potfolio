@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
@@ -18,12 +17,18 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-redux', '@reduxjs/toolkit'],
-          'framer-motion': ['framer-motion'],
-          'gsap-vendor': ['gsap'],
-        },
-      },
-    },
-  },
+        manualChunks(id) {
+          if (id.includes('node_modules/react')) {
+            return 'react-vendor'
+          }
+          if (id.includes('node_modules/react-dom')) {
+            return 'react-vendor'
+          }
+          if (id.includes('node_modules/react-redux')) {
+            return 'react-vendor'
+          }
+        }
+      }
+    }
+  }
 })
