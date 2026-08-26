@@ -17,7 +17,7 @@ const projects = [
     title: 'Rolex Yacht-Master II',
     description: 'A hyper-premium, Awwwards-level cinematic scrollytelling landing page built for Rolex. Features a 192-frame synchronized canvas image sequence, React Three Fiber 3D interactions, and a luxury bento box layout.',
     tech: ['React', 'Three.js', 'Framer Motion', 'Tailwind CSS'],
-    github: 'https://github.com/kartikrana77/rolex',
+    github: 'https://github.com/kartikrana77/rolex.',
     icon: <Clock className="w-8 h-8 text-[var(--color-brand-orange)]" />
   },
   {

@@ -10,7 +10,7 @@ const certifications = [
     issuer: 'Google',
     issuedDate: null,
     credentialId: 'VVAO2JFI2YP9',
-    credentialUrl: 'https://coursera.org/share/3f7ee8f9c27f34516a7d083552116881',
+    credentialUrl: 'https://www.coursera.org/account/accomplishments/specialization/VVAO2JFI2YP9',
     skills: ['Generative AI', 'Web Application Development'],
     color: '#4285F4',
     gradient: 'linear-gradient(135deg, #4285F4 0%, #34A853 100%)',

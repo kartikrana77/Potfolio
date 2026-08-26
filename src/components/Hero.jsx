@@ -18,7 +18,7 @@ const carouselProjects = [
     title: "Rolex Yacht-Master II",
     description: "A hyper-premium cinematic scrollytelling landing page featuring a 192-frame canvas sequence, 3D interactive elements, and glassmorphism bento layouts.",
     tech: ["React", "Three.js", "Framer Motion"],
-    github: "https://github.com/kartikrana77/rolex",
+    github: "https://github.com/kartikrana77/rolex.",
     gradient: "linear-gradient(135deg, #fbbf24 0%, #b45309 100%)",
     icon: "⌚"
   },
