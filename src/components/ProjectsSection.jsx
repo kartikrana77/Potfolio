@@ -41,7 +41,7 @@ const projects = [
     title: 'Sage',
     description: 'An advanced, intelligent application currently under development. Built with robust full-stack technologies to deliver seamless automation and powerful features for complex real-world workflows.',
     tech: ['React', 'Node.js', 'Full-Stack Integration'],
-    github: 'https://github.com/kartikrana77/Sage',
+    github: 'https://github.com/kartikrana77/SAGE---Smart-Automated-Guidance-Engine',
     icon: <Sparkles className="w-8 h-8 text-[var(--color-brand-orange)]" />
   }
 ];
