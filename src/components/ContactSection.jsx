@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, Send, User, AtSign, MessageSquare, Tag, ArrowUpRight } from 'lucide-react';
+import { Mail, Phone, Send, User, AtSign, MessageSquare, Tag, ArrowUpRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import AnimatedHeading from './AnimatedHeading';
 
 // Brand SVGs (not in lucide-react due to trademark)
@@ -91,23 +91,60 @@ function Field({ label, icon, children }) {
 export default function ContactSection() {
   const [form, setForm] = useState({ name: '', email: '', topic: '', message: '' });
   const [focused, setFocused] = useState('');
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState('idle'); // 'idle' | 'submitting' | 'success' | 'error'
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    if (status === 'error') setStatus('idle');
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const subject = encodeURIComponent(
-      `[Portfolio Contact] ${form.topic || 'Message'} — from ${form.name}`
-    );
-    const body = encodeURIComponent(
-      `Hi Kartik,\n\nName: ${form.name}\nEmail: ${form.email}\nTopic: ${form.topic}\n\nMessage:\n${form.message}\n\n---\nSent via Portfolio Contact Form`
-    );
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${TO_EMAIL}&su=${subject}&body=${body}`;
-    window.open(gmailUrl, '_blank');
-    setSent(true);
-    setTimeout(() => setSent(false), 4000);
-    setForm({ name: '', email: '', topic: '', message: '' });
+    setStatus('submitting');
+    setErrorMessage('');
+
+    try {
+      const endpoint =
+        import.meta.env.VITE_CONTACT_FORM_ENDPOINT ||
+        `https://formsubmit.co/ajax/${TO_EMAIL}`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          _replyto: form.email,
+          topic: form.topic || 'General Inquiry',
+          message: form.message,
+          _subject: `[Portfolio Contact] ${form.topic || 'New Message'} from ${form.name}`,
+          _template: 'table',
+          _captcha: 'false',
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && (data.success === 'true' || data.success === true || !('success' in data))) {
+        setStatus('success');
+        setForm({ name: '', email: '', topic: '', message: '' });
+        setTimeout(() => {
+          setStatus('idle');
+        }, 6000);
+      } else {
+        throw new Error(data.message || 'Submission could not be completed.');
+      }
+    } catch (err) {
+      console.error('Contact form submission error:', err);
+      setStatus('error');
+      setErrorMessage(
+        err.message || 'Direct delivery was interrupted. You can still reach me directly using the links below.'
+      );
+    }
   };
 
   const focusStyle = (id) =>
@@ -285,29 +322,92 @@ export default function ContactSection() {
                   />
                 </Field>
 
+                {/* Honeypot field for spam prevention */}
+                <input
+                  type="text"
+                  name="_honey"
+                  style={{ display: 'none' }}
+                  tabIndex="-1"
+                  autoComplete="off"
+                />
+
+                {/* Status Messages */}
+                {status === 'success' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-['Space_Mono']"
+                  >
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
+                    <span>Message sent! Your email has been delivered directly to Kartik's inbox.</span>
+                  </motion.div>
+                )}
+
+                {status === 'error' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col gap-2 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-['Space_Mono']"
+                  >
+                    <div className="flex items-center gap-2 text-red-400 font-bold">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{errorMessage || 'Direct send failed.'}</span>
+                    </div>
+                    <p className="text-white/60">
+                      You can send your message directly via:{' '}
+                      <a
+                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${TO_EMAIL}&su=${encodeURIComponent(`[Portfolio Contact] ${form.topic || 'Message'} — from ${form.name || 'Visitor'}`)}&body=${encodeURIComponent(`Hi Kartik,\n\nName: ${form.name}\nEmail: ${form.email}\nTopic: ${form.topic}\n\nMessage:\n${form.message}`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-orange-400 underline hover:text-orange-300 ml-1"
+                      >
+                        Gmail Web
+                      </a>
+                      {' '}or{' '}
+                      <a
+                        href={`mailto:${TO_EMAIL}?subject=${encodeURIComponent(`[Portfolio Contact] ${form.topic || 'Message'} — from ${form.name || 'Visitor'}`)}&body=${encodeURIComponent(form.message)}`}
+                        className="text-orange-400 underline hover:text-orange-300"
+                      >
+                        Default Mail App
+                      </a>
+                    </p>
+                  </motion.div>
+                )}
+
                 {/* Submit */}
                 <button
                   type="submit"
-                  className="flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-['Space_Mono'] font-bold text-sm transition-all duration-300 mt-2"
+                  disabled={status === 'submitting'}
+                  className="flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-['Space_Mono'] font-bold text-sm transition-all duration-300 mt-2 disabled:opacity-75 disabled:cursor-not-allowed"
                   style={{
-                    background: sent
-                      ? 'rgba(52,168,83,0.9)'
-                      : 'var(--color-brand-orange)',
+                    background:
+                      status === 'success'
+                        ? 'rgba(52,168,83,0.9)'
+                        : 'var(--color-brand-orange)',
                     color: '#000',
-                    boxShadow: sent
-                      ? '0 8px 30px rgba(52,168,83,0.3)'
-                      : '0 8px 30px rgba(249,115,22,0.3)',
+                    boxShadow:
+                      status === 'success'
+                        ? '0 8px 30px rgba(52,168,83,0.3)'
+                        : '0 8px 30px rgba(249,115,22,0.3)',
                     transform: 'translateY(0)',
                   }}
                   onMouseEnter={(e) => {
-                    if (!sent) e.currentTarget.style.transform = 'translateY(-2px)';
+                    if (status === 'idle') e.currentTarget.style.transform = 'translateY(-2px)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >
-                  {sent ? (
-                    <>✓ Opening Gmail…</>
+                  {status === 'submitting' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sending Message…
+                    </>
+                  ) : status === 'success' ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Message Sent!
+                    </>
                   ) : (
                     <>
                       <Send className="w-4 h-4" />
@@ -316,8 +416,8 @@ export default function ContactSection() {
                   )}
                 </button>
 
-                <p className="text-white/25 text-xs font-['Space_Mono'] text-center">
-                  Opens Gmail compose with your message pre-filled →&nbsp;{TO_EMAIL}
+                <p className="text-white/35 text-xs font-['Space_Mono'] text-center">
+                  Directly delivers to&nbsp;{TO_EMAIL} • Fast response guaranteed
                 </p>
               </form>
             </div>
